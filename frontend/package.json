@@ -1,0 +1,28 @@
+{
+  "name": "timestamping-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^6.23.0",
+    "react-scripts": "5.0.1"
+  },
+  "scripts": {
+    "start": "cross-env HTTPS=true PORT=3001 react-scripts start",
+    "build": "react-scripts build"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead"
+    ],
+    "development": [
+      "last 1 chrome version"
+    ]
+  },
+  "proxy": "https://localhost:8443",
+  "devDependencies": {
+    "cross-env": "^10.1.0"
+  }
+}

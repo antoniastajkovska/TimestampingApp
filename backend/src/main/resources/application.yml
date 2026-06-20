@@ -1,0 +1,85 @@
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    # Server identity — cert chain signed by Lab CA → Root CA
+    key-store: file:${SSL_KEYSTORE_PATH:../certs/keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:T1m3stamp#KS}
+    key-store-type: PKCS12
+    key-alias: timestamping-server
+    # mTLS is INTENTIONALLY disabled by default (client-auth: none).
+    # The PKI infrastructure is in place (truststore.p12, client.p12).
+    # To enable: set SSL_CLIENT_AUTH=need in .env and import certs/client.p12 into your browser.
+    # See docs/security.md for full mTLS instructions.
+    client-auth: ${SSL_CLIENT_AUTH:none}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/timestampingdb
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always          # runs schema.sql on startup
+      schema-locations: classpath:schema.sql
+  jpa:
+    hibernate:
+      ddl-auto: none        # schema managed by schema.sql, not Hibernate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  session:
+    timeout: 3600s
+
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER:timestampingapp.dev@gmail.com}
+    password: ${MAIL_PASS:cjbfpciwvpnbmsqm}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  crypto:
+    private-key-path: ${PRIVATE_KEY_PATH:../certs/private.pem}
+    public-key-path: ${PUBLIC_KEY_PATH:../certs/public.pem}
+  jit:
+    duration-minutes: 15
+  session:
+    cookie-name: TSESSION
+    max-age-seconds: 3600
+  totp:
+    test-mode: false
+    max-attempts: 5
+    lockout-minutes: 15
+  mail:
+    from: ${MAIL_USER:noreply@timestamping.local}
+    subject: "Your Timestamping Server verification code"
+
+# ── Actuator: expose only health and info — never env/beans/mappings ──────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never
+  health:
+    mail:
+      enabled: false   # don't probe SMTP on startup
+  server:
+    port: 9090   # serve actuator on a separate internal port
+
+logging:
+  level:
+    com.timestamping: DEBUG
+    org.springframework.security: INFO
