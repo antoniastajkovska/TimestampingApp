@@ -2,6 +2,7 @@ package com.timestamping.app.service;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
+import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.*;
 import com.timestamping.app.model.LogChainEntry;
 import jakarta.annotation.PostConstruct;
@@ -9,39 +10,70 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.*;
 import java.time.Instant;
-import java.util.Base64;
+import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.List;
 
 @Slf4j
 @Service
 public class CryptoService {
 
-    @Value("${app.crypto.private-key-path}")
-    private String privateKeyPath;
+    @Value("${app.tsa.keystore-path}")
+    private String tsaKeystorePath;
 
-    @Value("${app.crypto.public-key-path}")
-    private String publicKeyPath;
+    @Value("${app.tsa.keystore-password}")
+    private String tsaKeystorePassword;
+
+    @Value("${app.tsa.key-alias:tsa-signer}")
+    private String tsaKeyAlias;
 
     private RSAPrivateKey privateKey;
     private RSAPublicKey  publicKey;
     private RSASSASigner  signer;
     private RSASSAVerifier verifier;
+    private List<Base64>  x5cChain;
 
     @PostConstruct
     public void loadKeys() throws Exception {
-        privateKey = (RSAPrivateKey) loadPrivateKey(privateKeyPath);
-        publicKey  = (RSAPublicKey)  loadPublicKey(publicKeyPath);
-        signer     = new RSASSASigner(privateKey);
-        verifier   = new RSASSAVerifier(publicKey);
-        log.info("RSA-4096 key pair loaded for JWS signing");
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(tsaKeystorePath)) {
+            ks.load(fis, tsaKeystorePassword.toCharArray());
+        }
+
+        privateKey = (RSAPrivateKey) ks.getKey(tsaKeyAlias, tsaKeystorePassword.toCharArray());
+        if (privateKey == null) {
+            throw new IllegalStateException(
+                "TSA private key not found in keystore with alias '" + tsaKeyAlias + "'");
+        }
+
+        Certificate[] chain = ks.getCertificateChain(tsaKeyAlias);
+        if (chain == null || chain.length == 0) {
+            throw new IllegalStateException(
+                "No certificate chain found for alias '" + tsaKeyAlias + "'");
+        }
+
+        publicKey = (RSAPublicKey) chain[0].getPublicKey();
+
+        // x5c = Base64-encoded DER for each cert: tsa.crt → tsaCA.crt → rootCA.crt
+        // Embedded in every JWS token so relying parties can verify offline
+        x5cChain = new ArrayList<>();
+        for (Certificate cert : chain) {
+            x5cChain.add(Base64.encode(cert.getEncoded()));
+        }
+
+        // PS256 = RSA-PSS with SHA-256 (probabilistic, no deterministic padding pattern)
+        // Replaces RS256 (PKCS#1 v1.5) which is vulnerable to Bleichenbacher attacks
+        signer   = new RSASSASigner(privateKey);
+        verifier = new RSASSAVerifier(publicKey);
+
+        log.info("TSA key loaded from keystore (alias={}, chain={})", tsaKeyAlias, chain.length);
     }
 
     public String createJwsToken(String fileHash, Instant timestamp, long seq) throws Exception {
@@ -53,8 +85,9 @@ public class CryptoService {
                 .build();
 
         SignedJWT jwt = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256)
-                        .keyID("timestamping-key-v1")
+                new JWSHeader.Builder(JWSAlgorithm.PS256)
+                        .keyID(tsaKeyAlias)
+                        .x509CertChain(x5cChain)   // enables offline verification
                         .build(),
                 claims);
 
@@ -89,7 +122,6 @@ public class CryptoService {
         return sha256Hex(canonical.getBytes(StandardCharsets.UTF_8));
     }
 
-    // SHA-256("GENESIS") — sentinel value for the first log entry's previous_row_hash
     public String genesisHash() throws Exception {
         return sha256Hex("GENESIS".getBytes(StandardCharsets.UTF_8));
     }
@@ -97,23 +129,5 @@ public class CryptoService {
     private String sha256Hex(byte[] data) throws NoSuchAlgorithmException {
         return HexFormat.of().formatHex(
             MessageDigest.getInstance("SHA-256").digest(data));
-    }
-
-    private PrivateKey loadPrivateKey(String path) throws Exception {
-        String pem = Files.readString(Paths.get(path))
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s", "");
-        byte[] der = Base64.getDecoder().decode(pem);
-        return KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(der));
-    }
-
-    private PublicKey loadPublicKey(String path) throws Exception {
-        String pem = Files.readString(Paths.get(path))
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\s", "");
-        byte[] der = Base64.getDecoder().decode(pem);
-        return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(der));
     }
 }

@@ -1,5 +1,6 @@
 services:
 
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
   db:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -17,6 +18,46 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # ── Spring Boot backend ────────────────────────────────────────────────────
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    ports:
+      - "8443:8443"
+      - "9090:9090"
+    env_file: .env
+    environment:
+      DB_HOST: db          # override localhost → Docker service name
+    volumes:
+      # certs/ is gitignored — run generate-certs.sh first
+      - ./certs:/app/certs:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── React frontend (CRA dev server with HTTPS) ─────────────────────────────
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      HTTPS: "true"
+      PORT: "3001"
+      SSL_CRT_FILE: /app/certs/chain.crt       # PKI cert for dev server HTTPS
+      SSL_KEY_FILE: /app/certs/tls.key
+      BACKEND_URL: https://backend:8443         # setupProxy.js reads this
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"         # allow self-signed cert on proxy connection
+      CHOKIDAR_USEPOLLING: "true"               # file watching in Docker on Windows
+      WDS_SOCKET_PORT: "3001"                   # fix WebSocket hot-reload port in container
+    volumes:
+      - ./certs:/app/certs:ro
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

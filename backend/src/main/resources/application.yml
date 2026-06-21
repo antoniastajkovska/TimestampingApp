@@ -6,7 +6,7 @@ server:
     key-store: file:${SSL_KEYSTORE_PATH:../certs/keystore.p12}
     key-store-password: ${SSL_KEYSTORE_PASSWORD:T1m3stamp#KS}
     key-store-type: PKCS12
-    key-alias: timestamping-server
+    key-alias: tls-server
     # mTLS is INTENTIONALLY disabled by default (client-auth: none).
     # The PKI infrastructure is in place (truststore.p12, client.p12).
     # To enable: set SSL_CLIENT_AUTH=need in .env and import certs/client.p12 into your browser.
@@ -15,7 +15,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/timestampingdb
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/timestampingdb
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -47,9 +47,10 @@ spring:
             enable: true
 
 app:
-  crypto:
-    private-key-path: ${PRIVATE_KEY_PATH:../certs/private.pem}
-    public-key-path: ${PUBLIC_KEY_PATH:../certs/public.pem}
+  tsa:
+    keystore-path: ${TSA_KEYSTORE_PATH:../certs/tsa-keystore.p12}
+    keystore-password: ${TSA_KEYSTORE_PASSWORD:T1m3stamp#TSA}
+    key-alias: tsa-signer
   jit:
     duration-minutes: 15
   session:
