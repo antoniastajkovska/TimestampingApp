@@ -44,6 +44,15 @@ CREATE TABLE IF NOT EXISTS user_roles (
     PRIMARY KEY (user_id, role_id)
 );
 
+-- Single-use nonces (anti-replay)
+CREATE TABLE IF NOT EXISTS nonces (
+    id          BIGSERIAL       PRIMARY KEY,
+    nonce_hex   VARCHAR(64)     NOT NULL UNIQUE,
+    created_by  BIGINT          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at  TIMESTAMPTZ     NOT NULL,
+    used        BOOLEAN         NOT NULL DEFAULT FALSE
+);
+
 -- Tamper-evident log chain
 -- sequence_number is allocated from a dedicated sequence so there are
 -- no gaps and no race conditions when two requests arrive simultaneously.
@@ -57,8 +66,34 @@ CREATE TABLE IF NOT EXISTS log_chain (
     requested_by        BIGINT          NOT NULL REFERENCES users(id),
     signature           TEXT            NOT NULL,           -- JWS compact token
     previous_row_hash   VARCHAR(64)     NOT NULL,           -- SHA-256(canonical JSON of prev row)
+    nonce               VARCHAR(64),                        -- consumed single-use nonce
+    ntp_source          VARCHAR(100),                       -- NTP server that provided the time
     created_at          TIMESTAMPTZ     NOT NULL DEFAULT now()
 );
+
+-- Prevent any UPDATE or DELETE on log_chain rows (tamper-evident guarantee).
+-- Triggers fire even for superusers; RULES do not protect against TRUNCATE.
+CREATE OR REPLACE FUNCTION prevent_log_chain_modification()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'log_chain is append-only: % is not permitted', TG_OP
+        USING ERRCODE = '55000';  -- object_not_in_prerequisite_state
+END;
+$$;
+
+DROP TRIGGER IF EXISTS log_chain_immutable_update ON log_chain;
+CREATE TRIGGER log_chain_immutable_update
+    BEFORE UPDATE ON log_chain
+    FOR EACH ROW EXECUTE FUNCTION prevent_log_chain_modification();
+
+DROP TRIGGER IF EXISTS log_chain_immutable_delete ON log_chain;
+CREATE TRIGGER log_chain_immutable_delete
+    BEFORE DELETE ON log_chain
+    FOR EACH ROW EXECUTE FUNCTION prevent_log_chain_modification();
+
+-- Revoke destructive privileges from PUBLIC (defence-in-depth on top of triggers).
+-- In production: create a dedicated app role and GRANT only SELECT, INSERT to it.
+REVOKE UPDATE, DELETE, TRUNCATE ON log_chain FROM PUBLIC;
 
 -- Audit log — append-only record of security-relevant events
 CREATE TABLE IF NOT EXISTS audit_log (

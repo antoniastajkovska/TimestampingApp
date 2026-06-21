@@ -16,6 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.timestamping.app.service.NonceService;
+import com.timestamping.app.service.NtpService;
+
 import java.time.Instant;
 import java.util.Base64;
 
@@ -29,12 +32,17 @@ public class TimestampService {
     private final CryptoService cryptoService;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
+    private final NonceService nonceService;
+    private final NtpService ntpService;
 
     @Transactional
-    public TimestampResponse createTimestamp(String fileHash, String username,
+    public TimestampResponse createTimestamp(String fileHash, String nonce, String username,
                                              HttpServletRequest httpReq) throws Exception {
+        nonceService.consume(nonce);
+
         User user = userRepository.findByUsername(username).orElseThrow();
-        Instant now = Instant.now();
+        Instant now = ntpService.now();
+        String ntpSource = ntpService.lastSource();
 
         String prevHash = logChainRepository.findLatestEntryForUpdate()
                 .map(prev -> {
@@ -57,6 +65,8 @@ public class TimestampService {
         entry.setRequestedBy(user);
         entry.setSignature(jwsToken);
         entry.setPreviousRowHash(prevHash);
+        entry.setNonce(nonce);
+        entry.setNtpSource(ntpSource);
         logChainRepository.save(entry);
 
         log.info("Log chain entry #{} created by {}", nextSeq, username);

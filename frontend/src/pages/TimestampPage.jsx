@@ -41,7 +41,8 @@ export default function TimestampPage() {
     if (!fileHash) return;
     setError(''); setSubmitting(true);
     try {
-      const res = await api.createTimestamp({ fileHash });
+      const { nonce } = await api.generateNonce();
+      const res = await api.createTimestamp({ fileHash, nonce });
       setTokenData(res);
     } catch (err) { setError(err.message); }
     finally { setSubmitting(false); }

@@ -35,6 +35,12 @@ public class LogChainEntry {
     @Column(name = "previous_row_hash", nullable = false, length = 64)
     private String previousRowHash;
 
+    @Column(name = "nonce", length = 64)
+    private String nonce;
+
+    @Column(name = "ntp_source", length = 100)
+    private String ntpSource;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

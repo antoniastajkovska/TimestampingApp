@@ -26,7 +26,7 @@ public class TimestampController {
             HttpServletRequest httpReq) throws Exception {
 
         return ResponseEntity.ok(
-            timestampService.createTimestamp(req.fileHash(), principal.getUsername(), httpReq));
+            timestampService.createTimestamp(req.fileHash(), req.nonce(), principal.getUsername(), httpReq));
     }
 
     @PostMapping("/verify")

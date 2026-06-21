@@ -41,6 +41,7 @@ export const api = {
   requestDelete:   (password) => request('/jit/request-delete',  { method: 'POST', body: JSON.stringify({ password }) }),
 
   // Timestamps
+  generateNonce:   ()     => request('/nonce/generate',        { method: 'POST' }),
   createTimestamp: (body) => request('/timestamp',             { method: 'POST', body: JSON.stringify(body) }),
   verifyTimestamp: (body) => request('/timestamp/verify',      { method: 'POST', body: JSON.stringify(body) }),
 
