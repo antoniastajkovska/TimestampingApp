@@ -21,8 +21,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   sql:
     init:
-      mode: always          # runs schema.sql on startup
-      schema-locations: classpath:schema.sql
+      mode: never           # schema is managed by PostgreSQL via docker-entrypoint-initdb.d/
   jpa:
     hibernate:
       ddl-auto: none        # schema managed by schema.sql, not Hibernate
