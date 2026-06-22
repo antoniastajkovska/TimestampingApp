@@ -40,8 +40,10 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserSummary> adminCreateUser(
-            @Valid @RequestBody AdminCreateUserRequest req) {
-        return ResponseEntity.ok(userService.adminCreateUser(req));
+            @Valid @RequestBody AdminCreateUserRequest req,
+            @AuthenticationPrincipal UserDetails principal,
+            HttpServletRequest httpReq) {
+        return ResponseEntity.ok(userService.adminCreateUser(req, principal.getUsername(), httpReq));
     }
 
     @PutMapping("/{id}")
@@ -49,16 +51,18 @@ public class UserController {
     public ResponseEntity<UserSummary> adminUpdateUser(
             @PathVariable Long id,
             @Valid @RequestBody AdminUpdateUserRequest req,
-            @AuthenticationPrincipal UserDetails principal) {
-        return ResponseEntity.ok(userService.adminUpdateUser(id, req, principal.getUsername()));
+            @AuthenticationPrincipal UserDetails principal,
+            HttpServletRequest httpReq) {
+        return ResponseEntity.ok(userService.adminUpdateUser(id, req, principal.getUsername(), httpReq));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('JIT_DELETE')")
     public ResponseEntity<Map<String, String>> adminDeleteUser(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails principal) {
-        userService.adminDeleteUser(id, principal.getUsername());
+            @AuthenticationPrincipal UserDetails principal,
+            HttpServletRequest httpReq) {
+        userService.adminDeleteUser(id, principal.getUsername(), httpReq);
         return ResponseEntity.ok(Map.of("message", "User deleted."));
     }
 

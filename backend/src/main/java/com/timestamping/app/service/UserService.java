@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 
@@ -98,7 +99,8 @@ public class UserService {
     // â”€â”€ Admin CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @Transactional
-    public UserSummary adminCreateUser(AdminCreateUserRequest req) {
+    public UserSummary adminCreateUser(AdminCreateUserRequest req, String adminUsername, HttpServletRequest httpReq) {
+        User actor = userRepository.findByUsername(adminUsername).orElseThrow();
         if (userRepository.existsByUsername(req.username())) {
             throw new IllegalArgumentException("Username already taken");
         }
@@ -117,11 +119,14 @@ public class UserService {
         user.getRoles().add(orgUser);
 
         userRepository.save(user);
+        auditService.log(actor, adminUsername, EventType.ADMIN_CREATE_USER, httpReq,
+                "created user=" + user.getUsername());
         return UserSummary.from(user);
     }
 
     @Transactional
-    public UserSummary adminUpdateUser(Long targetId, AdminUpdateUserRequest req, String adminUsername) {
+    public UserSummary adminUpdateUser(Long targetId, AdminUpdateUserRequest req, String adminUsername, HttpServletRequest httpReq) {
+        User actor = userRepository.findByUsername(adminUsername).orElseThrow();
         User target = userRepository.findById(targetId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -138,11 +143,14 @@ public class UserService {
         target.setEmail(req.email());
         target.setUpdatedAt(Instant.now());
         userRepository.save(target);
+        auditService.log(actor, adminUsername, EventType.ADMIN_UPDATE_USER, httpReq,
+                "updated userId=" + targetId + " username=" + target.getUsername());
         return UserSummary.from(target);
     }
 
     @Transactional
-    public void adminDeleteUser(Long targetId, String adminUsername) {
+    public void adminDeleteUser(Long targetId, String adminUsername, HttpServletRequest httpReq) {
+        User actor = userRepository.findByUsername(adminUsername).orElseThrow();
         User target = userRepository.findById(targetId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -151,6 +159,8 @@ public class UserService {
         }
 
         sessionService.invalidateAllSessionsForUser(target.getUsername());
+        auditService.log(actor, adminUsername, EventType.ADMIN_DELETE_USER, httpReq,
+                "deleted userId=" + targetId + " username=" + target.getUsername());
         userRepository.delete(target);
     }
 }

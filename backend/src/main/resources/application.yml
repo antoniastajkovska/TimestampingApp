@@ -59,6 +59,8 @@ app:
     test-mode: false
     max-attempts: 5
     lockout-minutes: 15
+    # Must be a private server-only secret; OTPs are stored as HMACs with this key.
+    hmac-secret: ${TOTP_HMAC_SECRET:change-me-before-deploy}
   mail:
     from: ${MAIL_USER:noreply@timestamping.local}
     subject: "Your Timestamping Server verification code"

@@ -18,7 +18,9 @@ public record UserProfileResponse(
     List<String> roles
 ) {
     public static UserProfileResponse from(User u) {
+        Instant now = Instant.now();
         var roleNames = u.getRoles().stream()
+                .filter(r -> isActiveRole(u, r.getName(), now))
                 .map(r -> r.getName())
                 .toList();
         return new UserProfileResponse(
@@ -28,5 +30,13 @@ public record UserProfileResponse(
             u.getAuditorExpiresAt(), u.getDeleteExpiresAt(),
             roleNames
         );
+    }
+
+    private static boolean isActiveRole(User u, String roleName, Instant now) {
+        return switch (roleName) {
+            case "JIT_AUDITOR" -> u.getAuditorExpiresAt() == null || now.isBefore(u.getAuditorExpiresAt());
+            case "JIT_DELETE"  -> u.getDeleteExpiresAt() == null || now.isBefore(u.getDeleteExpiresAt());
+            default -> true;
+        };
     }
 }

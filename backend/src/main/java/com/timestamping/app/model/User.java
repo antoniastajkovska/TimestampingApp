@@ -32,7 +32,7 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-    // 2FA fields
+    // 2FA fields. totpSecret stores an HMAC of the OTP, not the OTP itself.
     @Column(name = "totp_secret", length = 64)
     private String totpSecret;
 
