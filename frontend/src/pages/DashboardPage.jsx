@@ -192,52 +192,9 @@ export default function DashboardPage() {
 
   return (
     <>
-      {/* ── Welcome Banner ── */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0F2444 0%, #1a3a6b 50%, #0c1e3d 100%)',
-        border: '1px solid rgba(37,99,235,0.35)',
-        borderRadius: 20,
-        padding: '28px 32px',
-        marginBottom: 24,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* background decoration */}
-        <div style={{ position: 'absolute', right: -40, top: -40, width: 200, height: 200, background: 'radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', right: 80, bottom: -60, width: 160, height: 160, background: 'radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div>
-          <div style={{ fontSize: 13, color: 'var(--cyan)', fontWeight: 600, marginBottom: 6, letterSpacing: '.04em', textTransform: 'uppercase' }}>
-            Welcome back
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-.03em', marginBottom: 6 }}>
-            {me?.firstName ? `${me.firstName} ${me.lastName || ''}`.trim() : username}
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--text2)' }}>
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 16, flexShrink: 0 }}>
-          <div style={{ textAlign: 'center', background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', borderRadius: 14, padding: '14px 20px' }}>
-            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--cyan)' }}>RFC</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>3161-inspired</div>
-          </div>
-          <div style={{ textAlign: 'center', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '14px 20px' }}>
-            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--green)' }}>PS256</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>JWS Signing</div>
-          </div>
-          <div style={{ textAlign: 'center', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 14, padding: '14px 20px' }}>
-            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--purple)' }}>NTP</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>Time Sync</div>
-          </div>
-        </div>
-      </div>
-
       <div className="page-header" style={{ marginBottom: 20 }}>
-        <div className="page-title">🛡️ Security Dashboard</div>
-        <div className="page-desc">Central control panel — all security systems nominal</div>
+        <div className="page-title">Security Dashboard</div>
+        <div className="page-desc">Current account status and system health</div>
       </div>
 
       {error && <div className="result-box error" style={{ marginBottom: 16 }}>{error}</div>}
@@ -248,7 +205,6 @@ export default function DashboardPage() {
         {/* Account Info */}
         <div className="card" style={{ marginBottom: 0 }}>
           <div className="card-header">
-            <span className="card-icon">👤</span>
             <div><div className="card-title">Account Info</div><div className="card-subtitle">Identity &amp; roles</div></div>
           </div>
           {me ? (
@@ -262,7 +218,7 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
                 {(me.roles || roles).map(r => roleBadge(r))}
               </div>
-              <Link to="/profile" className="btn btn-ghost btn-sm">✏️ Edit Profile</Link>
+              <Link to="/profile" className="btn btn-ghost btn-sm">Edit Profile</Link>
             </>
           ) : (
             <div style={{ color: 'var(--text3)', fontSize: 13 }}>Loading…</div>
@@ -272,10 +228,9 @@ export default function DashboardPage() {
         {/* JIT Access (ADMIN only) or info card for regular users */}
         {isAdmin ? (
           <div className="card" style={{ marginBottom: 0 }}>
-            <div className="card-header">
-              <span className="card-icon">⚡</span>
-              <div><div className="card-title">JIT Elevation</div><div className="card-subtitle">Temporary privilege escalation</div></div>
-            </div>
+          <div className="card-header">
+            <div><div className="card-title">JIT Elevation</div><div className="card-subtitle">Temporary privilege escalation</div></div>
+          </div>
 
             {/* JIT_AUDITOR */}
             <div className="jit-row">
@@ -308,20 +263,19 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 12, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
-              🔐 Password re-entry required · 15 min auto-revoke
+              Password re-entry required · 15 min auto-revoke
             </div>
           </div>
         ) : (
           <div className="card" style={{ marginBottom: 0 }}>
             <div className="card-header">
-              <span className="card-icon">🔏</span>
               <div><div className="card-title">Your Access</div><div className="card-subtitle">Active permissions</div></div>
             </div>
             <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6 }}>
-              <div style={{ marginBottom: 8 }}>✅ Create &amp; verify timestamps</div>
-              <div style={{ marginBottom: 8 }}>✅ Manage your profile</div>
-              <div style={{ marginBottom: 8 }}>✅ Change password</div>
-              <div style={{ color: 'var(--text3)' }}>🔒 Admin features require ADMIN role</div>
+              <div style={{ marginBottom: 8 }}>Create and verify timestamps</div>
+              <div style={{ marginBottom: 8 }}>Manage your profile</div>
+              <div style={{ marginBottom: 8 }}>Change password</div>
+              <div style={{ color: 'var(--text3)' }}>Admin features require ADMIN role</div>
             </div>
           </div>
         )}
@@ -329,7 +283,6 @@ export default function DashboardPage() {
         {/* Security Status */}
         <div className="card" style={{ marginBottom: 0 }}>
           <div className="card-header">
-            <span className="card-icon">🔒</span>
             <div><div className="card-title">Security Status</div><div className="card-subtitle">All systems active</div></div>
           </div>
           <div className="status-grid">
@@ -350,7 +303,7 @@ export default function DashboardPage() {
           </div>
           {isAdmin && (
             <Link to="/audit" className="btn btn-ghost btn-sm" style={{ marginTop: 14 }}>
-              📋 View Audit Logs →
+              View Audit Logs
             </Link>
           )}
         </div>
@@ -361,13 +314,12 @@ export default function DashboardPage() {
         <div className="card">
           <div className="card-title-row">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 20 }}>📋</span>
               <div>
                 <div className="card-title">User Directory</div>
                 <div className="card-subtitle">All registered accounts</div>
               </div>
             </div>
-            <button className="btn btn-primary btn-sm" onClick={openCreate}>➕ Create User</button>
+            <button className="btn btn-primary btn-sm" onClick={openCreate}>Create User</button>
           </div>
 
           {users.length === 0 ? (
@@ -398,7 +350,7 @@ export default function DashboardPage() {
                               onClick={() => handleDelete(u)}
                               title={deleteActive ? 'Delete user' : 'Requires JIT_DELETE elevation'}
                             >
-                              {deleteActive ? '🗑️' : '🔒'}
+                              {deleteActive ? 'Delete' : 'Locked'}
                             </button>
                           )}
                         </div>
@@ -415,7 +367,7 @@ export default function DashboardPage() {
       {/* JIT Elevation Modal */}
       {elevateModal && (
         <JitElevateModal
-          title={elevateModal === 'auditor' ? '⚡ Request JIT_AUDITOR' : '⚡ Request JIT_DELETE'}
+          title={elevateModal === 'auditor' ? 'Request JIT_AUDITOR' : 'Request JIT_DELETE'}
           description={elevateModal === 'auditor'
             ? 'Grants temporary read access to audit logs and security events for 15 minutes.'
             : 'Grants temporary permission to delete users and revoke sessions for 15 minutes. Use with caution.'}
@@ -430,7 +382,7 @@ export default function DashboardPage() {
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-title">{modal.mode === 'create' ? '➕ Create User' : '✏️ Edit User'}</div>
+            <div className="modal-title">{modal.mode === 'create' ? 'Create User' : 'Edit User'}</div>
             {formError && <div className="result-box error" style={{ marginBottom: 16 }}>{formError}</div>}
             <form onSubmit={handleFormSubmit}>
               <div className="field">

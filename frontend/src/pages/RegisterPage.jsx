@@ -5,16 +5,18 @@ import { useToast } from '../components/Toast';
 
 function PwStrength({ password }) {
   const checks = {
-    len:     password.length >= 8,
-    upper:   /[A-Z]/.test(password),
-    lower:   /[a-z]/.test(password),
-    num:     /\d/.test(password),
+    len: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    num: /\d/.test(password),
     special: /[^a-zA-Z0-9]/.test(password),
   };
   const score = Object.values(checks).filter(Boolean).length;
   const colors = ['', 'var(--red)', 'var(--red)', 'var(--amber)', 'var(--blue)', 'var(--green)'];
   const labels = ['', 'Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+
   if (!password) return null;
+
   return (
     <div className="pw-strength">
       <div className="pw-bar">
@@ -42,12 +44,12 @@ export default function RegisterPage() {
   const toast = useToast();
   const [step, setStep] = useState('form');
   const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
-  const [otp, setOtp]   = useState(Array(8).fill(''));
+  const [otp, setOtp] = useState(Array(8).fill(''));
   const [pendingUsername, setPendingUsername] = useState('');
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const inputRefs  = useRef([]);
+  const inputRefs = useRef([]);
   const cooldownRef = useRef(null);
 
   useEffect(() => {
@@ -56,29 +58,39 @@ export default function RegisterPage() {
     return () => clearInterval(cooldownRef.current);
   }, [resendCooldown]);
 
-  const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
+  const set = key => e => setForm(f => ({ ...f, [key]: e.target.value }));
 
   function handleOtpChange(i, val) {
     const digit = val.replace(/\D/g, '').slice(-1);
-    const next = [...otp]; next[i] = digit; setOtp(next);
+    const next = [...otp];
+    next[i] = digit;
+    setOtp(next);
     if (digit && i < 7) inputRefs.current[i + 1]?.focus();
   }
+
   function handleOtpKey(i, e) {
     if (e.key === 'Backspace' && !otp[i] && i > 0) inputRefs.current[i - 1]?.focus();
   }
+
   function handleOtpPaste(e) {
     const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 8);
     if (!text) return;
     e.preventDefault();
     const next = Array(8).fill('');
-    text.split('').forEach((ch, i) => { next[i] = ch; });
+    text.split('').forEach((ch, i) => {
+      next[i] = ch;
+    });
     setOtp(next);
     inputRefs.current[Math.min(text.length, 7)]?.focus();
   }
 
   async function handleRegister(e) {
-    e.preventDefault(); setError('');
-    if (form.password !== form.confirm) { setError('Passwords do not match'); return; }
+    e.preventDefault();
+    setError('');
+    if (form.password !== form.confirm) {
+      setError('Passwords do not match');
+      return;
+    }
     setLoading(true);
     try {
       const data = await api.register({ username: form.username, email: form.email, password: form.password });
@@ -86,13 +98,17 @@ export default function RegisterPage() {
       setStep('verify');
       setResendCooldown(RESEND_COOLDOWN);
       setTimeout(() => inputRefs.current[0]?.focus(), 50);
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleResend() {
     if (resendCooldown > 0) return;
-    setError(''); setResendCooldown(RESEND_COOLDOWN);
+    setError('');
+    setResendCooldown(RESEND_COOLDOWN);
     setOtp(Array(8).fill(''));
     try {
       await api.register({ username: form.username, email: form.email, password: form.password });
@@ -104,24 +120,30 @@ export default function RegisterPage() {
   }
 
   async function handleVerify(e) {
-    e.preventDefault(); setError(''); setLoading(true);
+    e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
       await api.confirmRegister({ username: pendingUsername, code: otp.join('') });
       setStep('done');
       setTimeout(() => navigate('/login'), 2500);
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (step === 'done') {
     return (
       <div className="auth-wrap">
-        <div className="auth-card" style={{ textAlign: 'center', maxWidth: 430 }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
-          <div className="auth-title">Account Verified!</div>
-          <div className="auth-sub" style={{ marginTop: 8 }}>Redirecting you to sign in…</div>
+        <div className="auth-card auth-card-done" style={{ textAlign: 'center', maxWidth: 430 }}>
+          <div className="auth-title">Account verified</div>
+          <div className="auth-sub" style={{ marginTop: 8 }}>Redirecting you to sign in...</div>
           <div style={{ marginTop: 20 }}>
-            <div className="pw-bar"><div className="pw-fill" style={{ width: '100%', background: 'var(--green)' }} /></div>
+            <div className="pw-bar">
+              <div className="pw-fill" style={{ width: '100%', background: 'var(--green)' }} />
+            </div>
           </div>
         </div>
       </div>
@@ -133,7 +155,6 @@ export default function RegisterPage() {
       <div style={{ width: '100%', maxWidth: 430 }}>
         <div className="auth-card">
           <div className="auth-logo">
-            <div className="auth-logo-icon">📝</div>
             <div className="auth-title">
               {step === 'form' ? 'Create Account' : 'Verify your email'}
             </div>
@@ -166,7 +187,7 @@ export default function RegisterPage() {
               </div>
               {error && <div className="result-box error" style={{ marginBottom: 12 }}>{error}</div>}
               <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading}>
-                {loading ? 'Creating account…' : 'Create Account →'}
+                {loading ? 'Creating account...' : 'Create Account'}
               </button>
             </form>
           ) : (
@@ -176,39 +197,58 @@ export default function RegisterPage() {
               </div>
               <div className="otp-row" onPaste={handleOtpPaste}>
                 {otp.map((val, i) => (
-                  <input key={i} ref={el => inputRefs.current[i] = el}
+                  <input
+                    key={i}
+                    ref={el => (inputRefs.current[i] = el)}
                     className={`otp-box${val ? ' filled' : ''}`}
-                    value={val} maxLength={1} inputMode="numeric"
+                    value={val}
+                    maxLength={1}
+                    inputMode="numeric"
                     onChange={e => handleOtpChange(i, e.target.value)}
-                    onKeyDown={e => handleOtpKey(i, e)} />
+                    onKeyDown={e => handleOtpKey(i, e)}
+                  />
                 ))}
               </div>
               {error && <div className="result-box error" style={{ marginBottom: 12 }}>{error}</div>}
               <button type="submit" className="btn btn-cyan btn-full btn-lg" disabled={loading || otp.join('').length < 8}>
-                {loading ? 'Verifying…' : '✓ Verify & Activate'}
+                {loading ? 'Verifying...' : 'Verify & Activate'}
               </button>
               <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button type="button" className="btn btn-ghost" style={{ flex: 1 }}
-                  onClick={() => { setStep('form'); setError(''); setOtp(Array(8).fill('')); }}>
-                  ← Back
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setStep('form');
+                    setError('');
+                    setOtp(Array(8).fill(''));
+                  }}
+                >
+                  Back
                 </button>
-                <button type="button" className="btn btn-ghost" style={{ flex: 1 }}
-                  onClick={handleResend} disabled={resendCooldown > 0}>
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : '↺ Resend OTP'}
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ flex: 1 }}
+                  onClick={handleResend}
+                  disabled={resendCooldown > 0}
+                >
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
                 </button>
               </div>
             </form>
           )}
 
           <div className="sec-indicators">
-            <div className="sec-ind">🔐 BCrypt-12</div>
-            <div className="sec-ind">📧 OTP Verify</div>
-            <div className="sec-ind">🛡️ Passay Rules</div>
+            <div className="sec-ind">BCrypt-12</div>
+            <div className="sec-ind">OTP Verify</div>
+            <div className="sec-ind">Passay Rules</div>
           </div>
         </div>
+
         {step === 'form' && (
           <div className="auth-footer">
-            Already have an account? <Link to="/login">Sign in →</Link>
+            Already have an account? <Link to="/login">Sign in</Link>
           </div>
         )}
       </div>

@@ -11,7 +11,7 @@ export function ToastProvider({ children }) {
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4000);
   }, []);
 
-  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  const labels = { success: 'Success', error: 'Error', info: 'Info', warning: 'Warning' };
 
   return (
     <ToastContext.Provider value={addToast}>
@@ -19,12 +19,14 @@ export function ToastProvider({ children }) {
       <div className="toast-wrap">
         {toasts.map(t => (
           <div key={t.id} className={`toast ${t.type}`}>
-            <span>{icons[t.type]}</span>
+            <span className="toast-label">{labels[t.type]}</span>
             <span>{t.msg}</span>
             <span
               onClick={() => setToasts(ts => ts.filter(x => x.id !== t.id))}
               style={{ marginLeft: 'auto', cursor: 'pointer', opacity: .5, fontSize: 16, lineHeight: 1 }}
-            >×</span>
+            >
+              x
+            </span>
           </div>
         ))}
       </div>

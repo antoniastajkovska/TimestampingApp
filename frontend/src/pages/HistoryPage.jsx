@@ -4,8 +4,8 @@ import { api } from '../api/client';
 export default function HistoryPage() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
-  const [copied, setCopied]   = useState(null);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(null);
 
   useEffect(() => {
     api.getHistory()
@@ -21,15 +21,19 @@ export default function HistoryPage() {
     });
   }
 
-  const fmt = (iso) => new Date(iso).toLocaleString('en-GB', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  const fmt = iso => new Date(iso).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   });
 
   return (
     <>
       <div className="page-header">
-        <div className="page-title">📜 Timestamp History</div>
+        <div className="page-title">Timestamp History</div>
         <div className="page-desc">Your last 50 timestamped documents</div>
       </div>
 
@@ -37,11 +41,10 @@ export default function HistoryPage() {
 
       {loading ? (
         <div className="card" style={{ textAlign: 'center', padding: '48px', color: 'var(--text3)' }}>
-          Loading…
+          Loading...
         </div>
       ) : entries.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '60px 24px' }}>
-          <div style={{ fontSize: 48, marginBottom: 16, opacity: .2 }}>📜</div>
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text3)' }}>No timestamps yet</div>
           <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 6 }}>
             Go to the Timestamp page to create your first one
@@ -83,7 +86,7 @@ export default function HistoryPage() {
                         onClick={() => copyToken(e.signature, i)}
                         style={{ fontSize: 11 }}
                       >
-                        {copied === i ? '✓ Copied' : '📋 Copy JWS'}
+                        {copied === i ? 'Copied' : 'Copy JWS'}
                       </button>
                     </td>
                   </tr>
