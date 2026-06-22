@@ -2,6 +2,8 @@ package com.timestamping.app.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.timestamping.app.dto.ChainStatusResponse;
+import com.timestamping.app.dto.HistoryEntryResponse;
 import com.timestamping.app.dto.TimestampResponse;
 import com.timestamping.app.dto.VerifyRequest;
 import com.timestamping.app.dto.VerifyResponse;
@@ -13,6 +15,7 @@ import com.timestamping.app.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,7 @@ import com.timestamping.app.service.NtpService;
 
 import java.time.Instant;
 import java.util.Base64;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -83,6 +87,39 @@ public class TimestampService {
         String encodedToken = Base64.getEncoder().encodeToString(downloadEnvelope.getBytes());
 
         return new TimestampResponse(nextSeq, fileHash, now, jwsToken, prevHash, encodedToken);
+    }
+
+    public List<HistoryEntryResponse> getHistory(String username) {
+        return logChainRepository.findByUsername(username, PageRequest.of(0, 50))
+            .stream()
+            .map(e -> new HistoryEntryResponse(
+                e.getSequenceNumber(),
+                e.getFileHash(),
+                e.getTimestampUtc(),
+                e.getNtpSource(),
+                e.getSignature()
+            ))
+            .toList();
+    }
+
+    public ChainStatusResponse getChainStatus() {
+        List<LogChainEntry> all = logChainRepository.findAllOrdered();
+        long total = all.size();
+        if (total == 0) return new ChainStatusResponse(true, 0, "Chain is empty");
+
+        try {
+            String expectedPrev = cryptoService.genesisHash();
+            for (LogChainEntry entry : all) {
+                if (!entry.getPreviousRowHash().equals(expectedPrev)) {
+                    return new ChainStatusResponse(false, total,
+                        "Tamper detected at sequence #" + entry.getSequenceNumber());
+                }
+                expectedPrev = cryptoService.hashLogEntry(entry);
+            }
+            return new ChainStatusResponse(true, total, "All " + total + " entries verified");
+        } catch (Exception e) {
+            return new ChainStatusResponse(false, total, "Verification error: " + e.getMessage());
+        }
     }
 
     public VerifyResponse verifyTimestamp(VerifyRequest req, HttpServletRequest httpReq) {

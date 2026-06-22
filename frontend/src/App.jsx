@@ -9,6 +9,7 @@ import ProfilePage   from './pages/ProfilePage';
 import TimestampPage from './pages/TimestampPage';
 import VerifyPage    from './pages/VerifyPage';
 import AuditPage     from './pages/AuditPage';
+import HistoryPage   from './pages/HistoryPage';
 
 function ProtectedRoute({ children }) {
   const { username, loading } = useAuth();
@@ -44,6 +45,9 @@ function Sidebar() {
       </NavLink>
       <NavLink to="/verify" className={({ isActive }) => 'sidebar-link' + (isActive ? ' active' : '')}>
         <span className="sico">✅</span> Verify
+      </NavLink>
+      <NavLink to="/history" className={({ isActive }) => 'sidebar-link' + (isActive ? ' active' : '')}>
+        <span className="sico">📜</span> History
       </NavLink>
       <NavLink to="/profile" className={({ isActive }) => 'sidebar-link' + (isActive ? ' active' : '')}>
         <span className="sico">👤</span> Profile
@@ -109,6 +113,7 @@ function AppLayout() {
             <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/timestamp" element={<ProtectedRoute><TimestampPage /></ProtectedRoute>} />
             <Route path="/audit"     element={<ProtectedRoute><AuditPage /></ProtectedRoute>} />
+            <Route path="/history"   element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
             <Route path="*"          element={<Navigate to="/login" replace />} />
           </Routes>
         </main>

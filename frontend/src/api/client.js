@@ -44,6 +44,8 @@ export const api = {
   generateNonce:   ()     => request('/nonce/generate',        { method: 'POST' }),
   createTimestamp: (body) => request('/timestamp',             { method: 'POST', body: JSON.stringify(body) }),
   verifyTimestamp: (body) => request('/timestamp/verify',      { method: 'POST', body: JSON.stringify(body) }),
+  getHistory:      ()     => request('/timestamp/history'),
+  getChainStatus:  ()     => request('/timestamp/chain-status'),
 
   // Admin user management
   adminCreateUser: (body) => request('/users',                 { method: 'POST',   body: JSON.stringify(body) }),

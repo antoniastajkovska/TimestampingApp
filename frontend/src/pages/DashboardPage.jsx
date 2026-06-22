@@ -104,10 +104,11 @@ export default function DashboardPage() {
   const { username, roles, setRoles, auditorExpiresAt, setAuditorExpiresAt,
           deleteExpiresAt, setDeleteExpiresAt, requestAuditor, requestDelete, hasRole } = useAuth();
   const toast = useToast();
-  const [me, setMe]       = useState(null);
-  const [users, setUsers] = useState([]);
-  const [error, setError] = useState('');
+  const [me, setMe]           = useState(null);
+  const [users, setUsers]     = useState([]);
+  const [error, setError]     = useState('');
   const [jitLoading, setJitLoading] = useState(false);
+  const [chainStatus, setChainStatus] = useState(null);
   const [elevateModal, setElevateModal] = useState(null); // 'auditor' | 'delete'
   const [modal, setModal]             = useState(null);
   const [formValues, setFormValues]   = useState({ username: '', email: '', password: '' });
@@ -133,7 +134,11 @@ export default function DashboardPage() {
     if (isAdmin) api.getAllUsers().then(setUsers).catch(() => {});
   }, [isAdmin]);
 
-  useEffect(() => { loadMe(); loadUsers(); }, [loadMe, loadUsers]);
+  useEffect(() => {
+    loadMe();
+    loadUsers();
+    api.getChainStatus().then(setChainStatus).catch(() => setChainStatus({ intact: false, totalEntries: 0, message: 'Unavailable' }));
+  }, [loadMe, loadUsers]);
 
   const fmt = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
@@ -333,7 +338,15 @@ export default function DashboardPage() {
             <div className="status-item"><div className="status-dot green"/><div><div className="status-name">PS256 JWS</div><div className="status-val">Signing</div></div></div>
             <div className="status-item"><div className="status-dot cyan"/><div><div className="status-name">NTP Sync</div><div className="status-val">Active</div></div></div>
             <div className="status-item"><div className="status-dot amber"/><div><div className="status-name">Audit Log</div><div className="status-val">Running</div></div></div>
-            <div className="status-item"><div className="status-dot cyan"/><div><div className="status-name">Log Chain</div><div className="status-val">Intact</div></div></div>
+            <div className="status-item">
+              <div className={`status-dot ${chainStatus === null ? 'cyan' : chainStatus.intact ? 'green' : 'red'}`}/>
+              <div>
+                <div className="status-name">Log Chain</div>
+                <div className="status-val" title={chainStatus?.message}>
+                  {chainStatus === null ? 'Checking…' : chainStatus.intact ? `Intact (${chainStatus.totalEntries})` : 'TAMPERED'}
+                </div>
+              </div>
+            </div>
           </div>
           {isAdmin && (
             <Link to="/audit" className="btn btn-ghost btn-sm" style={{ marginTop: 14 }}>
