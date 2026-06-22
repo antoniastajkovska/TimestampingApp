@@ -187,7 +187,50 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="page-header">
+      {/* ── Welcome Banner ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0F2444 0%, #1a3a6b 50%, #0c1e3d 100%)',
+        border: '1px solid rgba(37,99,235,0.35)',
+        borderRadius: 20,
+        padding: '28px 32px',
+        marginBottom: 24,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* background decoration */}
+        <div style={{ position: 'absolute', right: -40, top: -40, width: 200, height: 200, background: 'radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', right: 80, bottom: -60, width: 160, height: 160, background: 'radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div>
+          <div style={{ fontSize: 13, color: 'var(--cyan)', fontWeight: 600, marginBottom: 6, letterSpacing: '.04em', textTransform: 'uppercase' }}>
+            Welcome back
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-.03em', marginBottom: 6 }}>
+            {me?.firstName ? `${me.firstName} ${me.lastName || ''}`.trim() : username}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text2)' }}>
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 16, flexShrink: 0 }}>
+          <div style={{ textAlign: 'center', background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', borderRadius: 14, padding: '14px 20px' }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--cyan)' }}>RFC</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>3161-inspired</div>
+          </div>
+          <div style={{ textAlign: 'center', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '14px 20px' }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--green)' }}>PS256</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>JWS Signing</div>
+          </div>
+          <div style={{ textAlign: 'center', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 14, padding: '14px 20px' }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--purple)' }}>NTP</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>Time Sync</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="page-header" style={{ marginBottom: 20 }}>
         <div className="page-title">🛡️ Security Dashboard</div>
         <div className="page-desc">Central control panel — all security systems nominal</div>
       </div>
@@ -286,9 +329,9 @@ export default function DashboardPage() {
           </div>
           <div className="status-grid">
             <div className="status-item"><div className="status-dot green"/><div><div className="status-name">TLS 1.3</div><div className="status-val">Active</div></div></div>
-            <div className="status-item"><div className="status-dot cyan"/><div><div className="status-name">mTLS</div><div className="status-val">Optional</div></div></div>
             <div className="status-item"><div className="status-dot blue"/><div><div className="status-name">OTP 2FA</div><div className="status-val">Enabled</div></div></div>
-            <div className="status-item"><div className="status-dot green"/><div><div className="status-name">RSA-2048</div><div className="status-val">Signing</div></div></div>
+            <div className="status-item"><div className="status-dot green"/><div><div className="status-name">PS256 JWS</div><div className="status-val">Signing</div></div></div>
+            <div className="status-item"><div className="status-dot cyan"/><div><div className="status-name">NTP Sync</div><div className="status-val">Active</div></div></div>
             <div className="status-item"><div className="status-dot amber"/><div><div className="status-name">Audit Log</div><div className="status-val">Running</div></div></div>
             <div className="status-item"><div className="status-dot cyan"/><div><div className="status-name">Log Chain</div><div className="status-val">Intact</div></div></div>
           </div>

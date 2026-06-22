@@ -75,14 +75,16 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="nav-brand">
-        <div className="nav-brand-icon">🔐</div>
-        TimeStamp <span>Secure</span>
+        <img src="/logo.png" alt="Timestamping Server" style={{ height: 38, width: 'auto' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>TIMESTAMPING</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--cyan)', letterSpacing: '.12em', textTransform: 'uppercase' }}>Server</span>
+        </div>
       </div>
       <div className="nav-spacer" />
       {username && (
         <>
           <div className="nav-pill cyan">🛡️ TLS 1.3</div>
-          <div className="nav-pill blue">🔒 mTLS</div>
           <div className="nav-pill green"><div className="nav-dot" /> Secure Session</div>
           <div className="nav-avatar">{initials}</div>
         </>
