@@ -35,8 +35,6 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    // â”€â”€ Admin endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserSummary> adminCreateUser(

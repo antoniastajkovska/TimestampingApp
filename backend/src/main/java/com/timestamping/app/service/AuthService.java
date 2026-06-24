@@ -48,16 +48,8 @@ public class AuthService {
 
     private final SecureRandom secureRandom = new SecureRandom();
 
-    // â”€â”€ Registration â€” Step 1 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    /**
-     * Validates uniqueness, saves the user as disabled (enabled=false),
-     * generates an OTP and emails it. The account is only enabled after
-     * the OTP is verified via confirmRegistration().
-     */
     @Transactional
     public String initiateRegistration(RegisterRequest req) {
-        // If the username exists but is still unverified, allow retry with a fresh OTP
         userRepository.findByUsername(req.username()).ifPresent(existing -> {
             if (existing.isEnabled()) throw new IllegalArgumentException("Username already taken");
         });
@@ -84,10 +76,7 @@ public class AuthService {
         return req.username();
     }
 
-    /**
-     * Step 2 â€” confirm registration OTP. Enables the account on success.
-     */
-    @Transactional
+    @Transactional(noRollbackFor = {BadCredentialsException.class, LockedException.class})
     public void confirmRegistration(TwoFactorRequest req, HttpServletRequest httpReq) {
         User user = userRepository.findByUsername(req.username())
                 .orElseThrow(() -> new BadCredentialsException("Unknown user"));
@@ -99,12 +88,6 @@ public class AuthService {
         auditService.log(user, user.getUsername(), EventType.REGISTER, httpReq, "email verified");
     }
 
-    // â”€â”€ Login â€” Step 1 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    /**
-     * Validates the password, generates an OTP, and emails it.
-     * Returns the username as a "pending" marker for the frontend.
-     */
     @Transactional
     public String initiateLogin(LoginRequest req, HttpServletRequest httpReq) {
         try {
@@ -124,9 +107,7 @@ public class AuthService {
         return req.username();
     }
 
-    // â”€â”€ Login â€” Step 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-    @Transactional
+    @Transactional(noRollbackFor = {BadCredentialsException.class, LockedException.class})
     public String verifyTwoFactor(TwoFactorRequest req, HttpServletRequest httpReq) {
         User user = userRepository.findByUsername(req.username())
                 .orElseThrow(() -> new BadCredentialsException("Invalid session"));
@@ -137,7 +118,6 @@ public class AuthService {
         return sessionService.createSession(user.getUsername());
     }
 
-    // â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private String issueOtp(User user) {
         return issueOtp(user, 10);

@@ -23,7 +23,6 @@ public class JitController {
 
     public record JitElevateRequest(@NotBlank String password) {}
 
-    /** ADMIN requests temporary JIT_AUDITOR role (audit log access). Requires password re-entry. */
     @PostMapping("/request-auditor")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> requestAuditorAccess(
@@ -39,7 +38,6 @@ public class JitController {
         ));
     }
 
-    /** ADMIN requests temporary JIT_DELETE role (destructive operations). Requires password re-entry. */
     @PostMapping("/request-delete")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> requestDeleteAccess(

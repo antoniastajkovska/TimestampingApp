@@ -96,8 +96,6 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    // â”€â”€ Admin CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
     @Transactional
     public UserSummary adminCreateUser(AdminCreateUserRequest req, String adminUsername, HttpServletRequest httpReq) {
         User actor = userRepository.findByUsername(adminUsername).orElseThrow();
