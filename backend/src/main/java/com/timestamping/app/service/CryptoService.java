@@ -62,14 +62,11 @@ public class CryptoService {
         publicKey = (RSAPublicKey) chain[0].getPublicKey();
 
         // x5c = Base64-encoded DER for each cert: tsa.crt → tsaCA.crt → rootCA.crt
-        // Embedded in every JWS token so relying parties can verify offline
         x5cChain = new ArrayList<>();
         for (Certificate cert : chain) {
             x5cChain.add(Base64.encode(cert.getEncoded()));
         }
 
-        // PS256 = RSA-PSS with SHA-256 (probabilistic, no deterministic padding pattern)
-        // Replaces RS256 (PKCS#1 v1.5) which is vulnerable to Bleichenbacher attacks
         signer   = new RSASSASigner(privateKey);
         verifier = new RSASSAVerifier(publicKey);
 

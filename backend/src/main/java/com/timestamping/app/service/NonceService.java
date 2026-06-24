@@ -43,10 +43,7 @@ public class NonceService {
         return hex;
     }
 
-    /**
-     * Atomically validates and consumes the nonce (single-use, pessimistic lock).
-     * Throws IllegalArgumentException if invalid, expired, or already used.
-     */
+   
     @Transactional
     public void consume(String nonceHex) {
         Nonce nonce = nonceRepository.findByNonceHexForUpdate(nonceHex)

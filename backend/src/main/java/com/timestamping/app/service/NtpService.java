@@ -17,7 +17,6 @@ import java.util.List;
 @Service
 public class NtpService {
 
-    // NTP epoch is 1900-01-01; Unix epoch is 1970-01-01 -> 70 years in seconds
     private static final long NTP_EPOCH_OFFSET = 2208988800L;
     private static final int NTP_PORT = 123;
     private static final int TIMEOUT_MS = 3_000;
@@ -67,8 +66,7 @@ public class NtpService {
                 medianOffset,
                 MAX_DRIFT_MS
             );
-            // Do not crash - Docker Desktop on dev machines can have large drift.
-            // In production this should alert/page oncall instead.
+         
         }
 
         lastOffsetMs = medianOffset;
@@ -88,7 +86,6 @@ public class NtpService {
         return lastGoodSource;
     }
 
-    // -----------------------------------------------------------------------
 
     private long queryOffsetMs(String host) throws Exception {
         byte[] buf = new byte[48];
@@ -107,10 +104,10 @@ public class NtpService {
             long t4 = System.currentTimeMillis();
 
             byte[] data = response.getData();
-            long ntpSeconds = extractUnsigned32(data, 40); // Transmit Timestamp (seconds)
+            long ntpSeconds = extractUnsigned32(data, 40); 
             long unixMs = (ntpSeconds - NTP_EPOCH_OFFSET) * 1_000L;
 
-            // Simple offset: (server_time - midpoint_of_roundtrip)
+         
             long midpoint = t1 + (t4 - t1) / 2;
             return unixMs - midpoint;
         }

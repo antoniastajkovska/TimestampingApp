@@ -30,13 +30,10 @@ if [ -f "$ENV_FILE" ]; then
     set +o allexport
     echo "==> Loaded secrets from .env"
 else
-    echo ""
-    echo "WARNING: .env not found — using built-in default passwords."
-    echo "         Copy .env.example to .env before any non-local use."
-    echo ""
+    echo "WARNING: .env not found"
 fi
 
-# Passwords — warn if not set, fall back to defaults for local dev only
+# Passwords 
 KS_PASS="${SSL_KEYSTORE_PASSWORD:-T1m3stamp#KS}"
 TS_PASS="${SSL_TRUSTSTORE_PASSWORD:-T1m3stamp#TS}"
 TSA_KS_PASS="${TSA_KEYSTORE_PASSWORD:-T1m3stamp#TSA}"
@@ -48,17 +45,14 @@ _using_defaults=0
 [ -z "${SSL_TRUSTSTORE_PASSWORD:-}"] && _using_defaults=1
 if [ "$_using_defaults" -eq 1 ]; then
     echo "WARNING: One or more keystore passwords not set in .env."
-    echo "         Default passwords are used — acceptable for local dev only."
+    echo "Default passwords are used"
     echo ""
 fi
 
-# MSYS_NO_PATHCONV prevents Git Bash from mangling /C=MK into a Windows path
 export MSYS_NO_PATHCONV=1
 
 # ==========================================================================
 echo "==> [1/7] Root CA (TimestampingApp Root CA) — self-signed, 4096-bit, 10 years"
-# pathlen:1 — Root may sign exactly one level of intermediate CAs
-# keyUsage  — RFC 5280 §4.2.1.3: CA certs must have keyCertSign + cRLSign
 # ==========================================================================
 openssl genrsa -out "$CERTS_DIR/rootCA.key" 4096
 chmod 600 "$CERTS_DIR/rootCA.key"
@@ -74,8 +68,7 @@ openssl req -x509 -new -nodes \
 
 # ==========================================================================
 echo "==> [2/7] TLS CA (TimestampingApp TLS CA) — signed by Root, 4096-bit, 5 years"
-# Dedicated intermediate for TLS only — isolates TLS key compromise from TSA signing
-# pathlen:0 — cannot issue further sub-CAs
+# Dedicated intermediate for TLS only 
 # ==========================================================================
 openssl genrsa -out "$CERTS_DIR/tlsCA.key" 4096
 chmod 600 "$CERTS_DIR/tlsCA.key"
@@ -103,8 +96,7 @@ openssl x509 -req \
 
 # ==========================================================================
 echo "==> [3/7] TSA CA (TimestampingApp TSA CA) — signed by Root, 4096-bit, 5 years"
-# Dedicated intermediate for timestamp signing — isolates TSA key compromise from HTTPS
-# pathlen:0 — cannot issue further sub-CAs
+# Dedicated intermediate for timestamp signing 
 # ==========================================================================
 openssl genrsa -out "$CERTS_DIR/tsaCA.key" 4096
 chmod 600 "$CERTS_DIR/tsaCA.key"
@@ -132,11 +124,8 @@ openssl x509 -req \
 
 # ==========================================================================
 echo "==> [4/7] TSA Signing Certificate — signed by TSA CA, 4096-bit, 3 years"
-# RFC 3161 §3.3: extendedKeyUsage MUST be critical and contain ONLY timeStamping
-#   — any other EKU (serverAuth, clientAuth) alongside timeStamping invalidates the cert
+# RFC 3161: extendedKeyUsage MUST be critical and contain ONLY timeStamping
 # RFC 5280: nonRepudiation (bit 1) proves the TSA cannot later deny issuing the token
-# 4096-bit key — timestamps must remain verifiable for years after issuance
-# 3-year validity — shorter than CA certs; rotate before Root/TSA CA expire
 # ==========================================================================
 openssl genrsa -out "$CERTS_DIR/tsa.key" 4096
 chmod 600 "$CERTS_DIR/tsa.key"
@@ -162,7 +151,7 @@ openssl x509 -req \
     -days    1095 -sha256 \
     -extfile "$EXT_DIR/tsa.ext"
 
-# PKCS#8 format required by Java (Spring Boot cannot load raw PKCS#1 keys)
+# PKCS#8 format required by Java 
 openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt \
     -in  "$CERTS_DIR/tsa.key" \
     -out "$CERTS_DIR/tsa-private.pem"
@@ -179,9 +168,6 @@ cat "$CERTS_DIR/tsa.crt" \
 
 # ==========================================================================
 echo "==> [5/7] Server TLS certificate (CN=localhost) — signed by TLS CA, 2048-bit, 1 year"
-# SAN required — modern browsers reject certs with CN-only (no subjectAltName)
-# 2048-bit is sufficient for TLS; 4096-bit reserved for long-lived signing keys
-# 1-year validity follows current CA/Browser Forum baseline requirements
 # ==========================================================================
 openssl genrsa -out "$CERTS_DIR/tls.key" 2048
 chmod 600 "$CERTS_DIR/tls.key"
@@ -208,7 +194,7 @@ openssl x509 -req \
     -days    365 -sha256 \
     -extfile "$EXT_DIR/server.ext"
 
-# TLS chain: server → TLS CA → Root CA
+# TLS chain: server -> TLS CA -> Root CA
 cat "$CERTS_DIR/tls.crt" \
     "$CERTS_DIR/tlsCA.crt" \
     "$CERTS_DIR/rootCA.crt" \
@@ -331,44 +317,3 @@ fi
 
 # Cleanup temporary CSR and extension files
 rm -f "$EXT_DIR"/*.csr "$EXT_DIR"/*.ext
-
-# ==========================================================================
-echo ""
-echo "==> PKI hierarchy:"
-echo ""
-echo "    TimestampingApp Root CA (rootCA.crt)"
-echo "        │"
-echo "        ├── TimestampingApp TLS CA (tlsCA.crt)"
-echo "        │       ├── tls.crt      serverAuth  → HTTPS (keystore.p12 / tls-server)"
-echo "        │       └── client.crt   clientAuth  → mTLS  (client.p12)"
-echo "        │"
-echo "        └── TimestampingApp TSA CA (tsaCA.crt)"
-echo "                └── tsa.crt      timeStamping + nonRepudiation"
-echo "                                 → JWS signing (tsa-keystore.p12 / tsa-signer)"
-echo ""
-echo "==> Spring Boot artifacts in $CERTS_DIR:"
-echo ""
-echo "    keystore.p12       TLS keystore    alias=tls-server  pw=${KS_PASS}"
-echo "    tsa-keystore.p12   TSA keystore    alias=tsa-signer  pw=${TSA_KS_PASS}"
-echo "    truststore.p12     mTLS truststore                   pw=${TS_PASS}"
-echo "    tsa-private.pem    TSA signing key (PKCS#8 for Java)"
-echo "    tsa-public.pem     TSA public key  (for GET /api/tsa/certificate)"
-echo "    tsa.crt            TSA X.509 certificate"
-echo "    chain.crt          TLS cert chain  (for React dev server)"
-echo "    tls.key            TLS private key (for React dev server)"
-echo ""
-echo "==> CA keys — keep these secure, never commit to git:"
-echo "    rootCA.key  tlsCA.key  tsaCA.key  tsa.key  client.key  tls.key"
-echo ""
-echo "==> Next steps:"
-echo "    1. certmgr.msc → Trusted Root Certification Authorities → Import → rootCA.crt"
-echo "    2. Restart Chrome"
-echo "    3. Add to .env:"
-echo "       TSA_KEYSTORE_PATH=../certs/tsa-keystore.p12"
-echo "       TSA_KEYSTORE_PASSWORD=${TSA_KS_PASS}"
-echo "       TSA_CERT_PATH=../certs/tsa.crt"
-echo ""
-echo "==> Optional mTLS (browser client certificate):"
-echo "    Chrome → Settings → Privacy → Security → Manage certificates"
-echo "    Import client.p12   password: ${CLIENT_PASS}"
-echo "    Then set SSL_CLIENT_AUTH=need in .env and restart backend"
