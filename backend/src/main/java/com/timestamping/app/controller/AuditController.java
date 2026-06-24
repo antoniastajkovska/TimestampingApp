@@ -22,7 +22,6 @@ public class AuditController {
 
     private final AuditLogRepository auditLogRepository;
 
-    /** Security events visible to JIT_AUDITOR: login failures, OTP failures, JIT grants, password changes, deletions. */
     private static final List<EventType> SECURITY_EVENTS = Arrays.asList(
         EventType.LOGIN_SUCCESS,
         EventType.LOGIN_FAIL,
@@ -34,7 +33,6 @@ public class AuditController {
         EventType.JIT_REVOKE
     );
 
-    /** Returns paginated audit log — all events, newest first. Requires JIT_AUDITOR. */
     @GetMapping("/logs")
     @PreAuthorize("hasRole('JIT_AUDITOR')")
     public ResponseEntity<Map<String, Object>> getLogs(
@@ -51,7 +49,6 @@ public class AuditController {
         ));
     }
 
-    /** Returns only security-relevant events (subset for the security dashboard). Requires JIT_AUDITOR. */
     @GetMapping("/security-events")
     @PreAuthorize("hasRole('JIT_AUDITOR')")
     public ResponseEntity<List<Map<String, Object>>> getSecurityEvents(

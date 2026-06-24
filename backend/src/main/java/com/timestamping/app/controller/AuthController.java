@@ -29,7 +29,6 @@ public class AuthController {
 
     // ── Registration ──────────────────────────────────────────────────────
 
-    /** Step 1 — validate fields, save disabled user, send OTP email. */
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(
             @Valid @RequestBody RegisterRequest req,
@@ -42,7 +41,6 @@ public class AuthController {
         ));
     }
 
-    /** Step 2 — verify registration OTP, enable account. */
     @PostMapping("/register/verify")
     public ResponseEntity<Map<String, String>> confirmRegistration(
             @Valid @RequestBody TwoFactorRequest req,
@@ -54,7 +52,6 @@ public class AuthController {
 
     // ── Login ─────────────────────────────────────────────────────────────
 
-    /** Step 1 — password check, send OTP email. */
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(
             @Valid @RequestBody LoginRequest req,
@@ -66,8 +63,6 @@ public class AuthController {
             "pendingUsername", pendingUsername
         ));
     }
-
-    /** Step 2 — OTP check, issue session cookie. */
     @PostMapping("/verify-2fa")
     public ResponseEntity<Map<String, String>> verify2fa(
             @Valid @RequestBody TwoFactorRequest req,
@@ -95,8 +90,6 @@ public class AuthController {
         httpRes.addCookie(buildSessionCookie("", 0));
         return ResponseEntity.ok(Map.of("message", "Logged out"));
     }
-
-    // ── helpers ───────────────────────────────────────────────────────────
 
     private Cookie buildSessionCookie(String value, int maxAge) {
         Cookie cookie = new Cookie("TSESSION", value);

@@ -6,15 +6,6 @@ import org.passay.*;
 
 import java.util.List;
 
-/**
- * Enforces password complexity rules using Passay:
- *  - Minimum 8 characters
- *  - At least 1 uppercase letter
- *  - At least 1 lowercase letter
- *  - At least 1 digit
- *  - At least 1 special character
- *  - No whitespace
- */
 public class PasswordConstraintValidator implements ConstraintValidator<ValidPassword, String> {
 
     @Override
@@ -33,7 +24,6 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
         RuleResult result = validator.validate(new PasswordData(password));
         if (result.isValid()) return true;
 
-        // Surface all failing rules as a single readable message
         String message = String.join("; ", validator.getMessages(result));
         ctx.disableDefaultConstraintViolation();
         ctx.buildConstraintViolationWithTemplate(message).addConstraintViolation();

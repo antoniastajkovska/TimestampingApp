@@ -19,7 +19,7 @@ spring:
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-  sql:
+  sql:  
     init:
       mode: never           # schema is managed by PostgreSQL via docker-entrypoint-initdb.d/
   jpa:

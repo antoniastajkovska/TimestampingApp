@@ -7,7 +7,6 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 
-// In-memory session store — intentional for this lab. Sessions are lost on restart.
 @Service
 public class SessionService {
 
